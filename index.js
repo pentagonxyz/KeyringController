@@ -1,30 +1,15 @@
 const { EventEmitter } = require('events');
 const { Buffer } = require('buffer');
-const bip39 = require('@metamask/bip39');
 const ObservableStore = require('obs-store');
-const encryptor = require('browser-passworder');
 const { normalize: normalizeAddress } = require('eth-sig-util');
 
-const SimpleKeyring = require('eth-simple-keyring');
-const HdKeyring = require('@metamask/eth-hd-keyring');
+const WhaleKeyring = require('pentagonxyz/whale-keyring');
 
-const keyringTypes = [SimpleKeyring, HdKeyring];
+const keyringTypes = [WhaleKeyring];
 
 const KEYRINGS_TYPE_MAP = {
-  HD_KEYRING: 'HD Key Tree',
-  SIMPLE_KEYRING: 'Simple Key Pair',
+  WHALE_KEYRING: 'Whale Financial MPC',
 };
-/**
- * Strip the hex prefix from an address, if present
- * @param {string} address - The address that might be hex prefixed.
- * @returns {string} The address without a hex prefix.
- */
-function stripHexPrefix(address) {
-  if (address.startsWith('0x')) {
-    return address.slice(2);
-  }
-  return address;
-}
 
 class KeyringController extends EventEmitter {
   //
@@ -34,9 +19,7 @@ class KeyringController extends EventEmitter {
   constructor(opts) {
     super();
     const initState = opts.initState || {};
-    this.keyringTypes = opts.keyringTypes
-      ? keyringTypes.concat(opts.keyringTypes)
-      : keyringTypes;
+    this.keyringTypes = keyringTypes;
     this.store = new ObservableStore(initState);
     this.memStore = new ObservableStore({
       isUnlocked: false,
@@ -44,7 +27,6 @@ class KeyringController extends EventEmitter {
       keyrings: [],
     });
 
-    this.encryptor = opts.encryptor || encryptor;
     this.keyrings = [];
   }
 
@@ -69,17 +51,16 @@ class KeyringController extends EventEmitter {
    * Create New Vault And Keychain
    *
    * Destroys any old encrypted storage,
-   * creates a new encrypted store with the given password,
+   * creates a new encrypted store with the given accessToken,
    * randomly creates a new HD wallet with 1 account,
    * faucets that account on the testnet.
    *
    * @emits KeyringController#unlock
-   * @param {string} password - The password to encrypt the vault with.
+   * @param {string} accessToken - The accessToken used for signing transactions.
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
-  async createNewVaultAndKeychain(password) {
-    await this.createFirstKeyTree(password);
-    await this.persistAllKeyrings(password);
+  async createNewVaultAndKeychain(accessToken) {
+    await this.createFirstKeyTree(accessToken);
     this.setUnlocked.bind();
     this.fullUpdate();
   }
@@ -98,42 +79,7 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
   async createNewVaultAndRestore(password, seedPhrase) {
-    const seedPhraseAsBuffer =
-      typeof seedPhrase === 'string'
-        ? Buffer.from(seedPhrase, 'utf8')
-        : Buffer.from(seedPhrase);
-
-    if (typeof password !== 'string') {
-      throw new Error('Password must be text.');
-    }
-
-    const wordlists = Object.values(bip39.wordlists);
-    if (
-      wordlists.every(
-        (wordlist) => !bip39.validateMnemonic(seedPhraseAsBuffer, wordlist),
-      )
-    ) {
-      throw new Error('Seed phrase is invalid.');
-    }
-
-    this.clearKeyrings();
-
-    await this.persistAllKeyrings(password);
-    const firstKeyring = await this.addNewKeyring(
-      KEYRINGS_TYPE_MAP.HD_KEYRING,
-      {
-        mnemonic: seedPhraseAsBuffer,
-        numberOfAccounts: 1,
-      },
-    );
-    const [firstAccount] = await firstKeyring.getAccounts();
-    if (!firstAccount) {
-      throw new Error('KeyringController - First Account not found.');
-    }
-
-    await this.persistAllKeyrings(password);
-    this.setUnlocked();
-    return this.fullUpdate();
+    throw new Error("createNewVaultAndRestore is not implemented in Whale Financial's KeyringController.");
   }
 
   /**
@@ -145,7 +91,7 @@ class KeyringController extends EventEmitter {
    */
   async setLocked() {
     // set locked
-    this.password = null;
+    this.accessToken = null;
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
@@ -155,38 +101,34 @@ class KeyringController extends EventEmitter {
   }
 
   /**
-   * Submit Password
+   * Submit Access Token (still named `submitPassword` though)
    *
-   * Attempts to decrypt the current vault and load its keyrings
+   * Attempts to access the current vault and load its keyrings
    * into memory.
    *
    * Temporarily also migrates any old-style vaults first, as well.
    * (Pre MetaMask 3.0.0)
    *
    * @emits KeyringController#unlock
-   * @param {string} password - The keyring controller password.
+   * @param {string} accessToken - The keyring controller access token.
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
-  async submitPassword(password) {
-    this.keyrings = await this.unlockKeyrings(password);
+  async submitPassword(accessToken) {
+    this.keyrings = await this.unlockKeyrings(accessToken);
     this.setUnlocked();
     this.fullUpdate();
   }
 
   /**
-   * Verify Password
+   * Verify Access Token (still named `verifyPassword` though)
    *
-   * Attempts to decrypt the current vault with a given password
+   * Attempts to access the current vault with a given Access Token
    * to verify its validity.
    *
-   * @param {string} password
+   * @param {string} accessToken
    */
-  async verifyPassword(password) {
-    const encryptedVault = this.store.getState().vault;
-    if (!encryptedVault) {
-      throw new Error('Cannot unlock without a previous vault.');
-    }
-    await this.encryptor.decrypt(password, encryptedVault);
+  async verifyPassword(accessToken) {
+    throw new Error("verifyPassword is not implemented in Whale Financial's KeyringController.");
   }
 
   /**
@@ -199,22 +141,19 @@ class KeyringController extends EventEmitter {
    * and this is used to retrieve them from the keyringTypes array.
    *
    * @param {string} type - The type of keyring to add.
-   * @param {Object} opts - The constructor options for the keyring.
+   * @param {Object} accessToken - The accessToken for the keyring.
    * @returns {Promise<Keyring>} The new keyring.
    */
-  async addNewKeyring(type, opts) {
-    const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(opts);
-    if ((!opts || !opts.mnemonic) && type === KEYRINGS_TYPE_MAP.HD_KEYRING) {
-      keyring.generateRandomMnemonic();
-      keyring.addAccounts();
-    }
+  async addNewKeyring(type, accessToken) {
+    if (type !== KEYRINGS_TYPE_MAP.WHALE_KEYRING) throw "Only KEYRINGS_TYPE_MAP.WHALE_KEYRING is supposed by Whale Financial's KeyringController.";
 
-    const accounts = await keyring.getAccounts();
-    await this.checkForDuplicate(type, accounts);
+    const Keyring = this.getKeyringClassForType(type);
+    const keyring = new Keyring(accessToken);
+
+    let accounts = await keyring.getAccounts();
+    if (accounts.length == 0) accounts = keyring.addAccounts();
 
     this.keyrings.push(keyring);
-    await this.persistAllKeyrings();
 
     await this._updateMemStoreKeyrings();
     this.fullUpdate();
@@ -247,42 +186,6 @@ class KeyringController extends EventEmitter {
   }
 
   /**
-   * Checks for duplicate keypairs, using the the first account in the given
-   * array. Rejects if a duplicate is found.
-   *
-   * Only supports 'Simple Key Pair'.
-   *
-   * @param {string} type - The key pair type to check for.
-   * @param {Array<string>} newAccountArray - Array of new accounts.
-   * @returns {Promise<Array<string>>} The account, if no duplicate is found.
-   */
-  async checkForDuplicate(type, newAccountArray) {
-    const accounts = await this.getAccounts();
-
-    switch (type) {
-      case KEYRINGS_TYPE_MAP.SIMPLE_KEYRING: {
-        const isIncluded = Boolean(
-          accounts.find(
-            (key) =>
-              key === newAccountArray[0] ||
-              key === stripHexPrefix(newAccountArray[0]),
-          ),
-        );
-
-        if (isIncluded) {
-          throw new Error(
-            "The account you're are trying to import is a duplicate",
-          );
-        }
-        return newAccountArray;
-      }
-      default: {
-        return newAccountArray;
-      }
-    }
-  }
-
-  /**
    * Add New Account
    *
    * Calls the `addAccounts` method on the given keyring,
@@ -297,7 +200,6 @@ class KeyringController extends EventEmitter {
       this.emit('newAccount', hexAccount);
     });
 
-    await this.persistAllKeyrings();
     await this._updateMemStoreKeyrings();
     this.fullUpdate();
   }
@@ -347,7 +249,6 @@ class KeyringController extends EventEmitter {
       await this.removeEmptyKeyrings();
     }
 
-    await this.persistAllKeyrings();
     await this._updateMemStoreKeyrings();
     this.fullUpdate();
   }
@@ -487,14 +388,14 @@ class KeyringController extends EventEmitter {
    * - Faucets that account on testnet
    * - Puts the current seed words into the state tree
    *
-   * @param {string} password - The keyring controller password.
+   * @param {string} accessToken - The keyring controller access token.
    * @returns {Promise<void>} - A promise that resolves if the operation was successful.
    */
-  async createFirstKeyTree(password) {
-    this.password = password;
+  async createFirstKeyTree(accessToken) {
+    this.accessToken = accessToken;
     this.clearKeyrings();
 
-    const keyring = await this.addNewKeyring(KEYRINGS_TYPE_MAP.HD_KEYRING);
+    const keyring = await this.addNewKeyring(KEYRINGS_TYPE_MAP.WHALE_KEYRING);
     const [firstAccount] = await keyring.getAccounts();
     if (!firstAccount) {
       throw new Error('KeyringController - No account found on keychain.');
@@ -506,58 +407,18 @@ class KeyringController extends EventEmitter {
   }
 
   /**
-   * Persist All Keyrings
-   *
-   * Iterates the current `keyrings` array,
-   * serializes each one into a serialized array,
-   * encrypts that array with the provided `password`,
-   * and persists that encrypted string to storage.
-   *
-   * @param {string} password - The keyring controller password.
-   * @returns {Promise<boolean>} Resolves to true once keyrings are persisted.
-   */
-  async persistAllKeyrings(password = this.password) {
-    if (typeof password !== 'string') {
-      throw new Error('KeyringController - password is not a string');
-    }
-
-    this.password = password;
-    const serializedKeyrings = await Promise.all(
-      this.keyrings.map(async (keyring) => {
-        const [type, data] = await Promise.all([
-          keyring.type,
-          keyring.serialize(),
-        ]);
-        return { type, data };
-      }),
-    );
-    const encryptedString = await this.encryptor.encrypt(
-      this.password,
-      serializedKeyrings,
-    );
-    this.store.updateState({ vault: encryptedString });
-    return true;
-  }
-
-  /**
    * Unlock Keyrings
    *
    * Attempts to unlock the persisted encrypted storage,
    * initializing the persisted keyrings to RAM.
    *
-   * @param {string} password - The keyring controller password.
+   * @param {string} accessToken - The keyring controller accessToken.
    * @returns {Promise<Array<Keyring>>} The keyrings.
    */
-  async unlockKeyrings(password) {
-    const encryptedVault = this.store.getState().vault;
-    if (!encryptedVault) {
-      throw new Error('Cannot unlock without a previous vault.');
-    }
-
+  async unlockKeyrings(accessToken) {
     await this.clearKeyrings();
-    const vault = await this.encryptor.decrypt(password, encryptedVault);
-    this.password = password;
-    await Promise.all(vault.map(this._restoreKeyring.bind(this)));
+    this.accessToken = accessToken;
+    await this._restoreKeyring({ type: KEYRINGS_TYPE_MAP.WHALE_KEYRING, data: accessToken });
     await this._updateMemStoreKeyrings();
     return this.keyrings;
   }
@@ -752,7 +613,6 @@ class KeyringController extends EventEmitter {
   forgetKeyring(keyring) {
     if (keyring.forgetDevice) {
       keyring.forgetDevice();
-      this.persistAllKeyrings.bind(this)();
       this._updateMemStoreKeyrings.bind(this)();
     } else {
       throw new Error(
