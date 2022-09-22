@@ -60,8 +60,11 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
   async createNewVaultAndKeychain(accessToken) {
-    await this.createFirstKeyTree(accessToken);
-    this.setUnlocked.bind();
+    this.store.updateState({ vault: "WHALE_FINANCIAL_MPC" });
+    if (accessToken !== undefined && typeof accessToken === 'string' && accessToken.length > 0) {
+      await this.createFirstKeyTree(accessToken);
+      this.setUnlocked.bind();
+    }
     this.fullUpdate();
   }
 
@@ -455,7 +458,8 @@ class KeyringController extends EventEmitter {
     const keyring = new Keyring();
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
-    await keyring.getAccounts();
+    let accounts = await keyring.getAccounts();
+    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) accounts = keyring.addAccounts();
     this.keyrings.push(keyring);
     return keyring;
   }
