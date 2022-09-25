@@ -197,8 +197,8 @@ class KeyringController extends EventEmitter {
    * @param {Keyring} selectedKeyring - The currently selected keyring.
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
-  async addNewAccount(selectedKeyring) {
-    const accounts = await selectedKeyring.addAccounts(1);
+  async addNewAccount(selectedKeyring, name) {
+    const accounts = await selectedKeyring.addAccounts(1, name !== undefined && typeof name === 'string' && name.length > 0 ? [name] : undefined);
     accounts.forEach((hexAccount) => {
       this.emit('newAccount', hexAccount);
     });
