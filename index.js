@@ -624,6 +624,10 @@ class KeyringController extends EventEmitter {
       );
     }
   }
+
+  mfaResolution(signatureData, errorMessage) {
+    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].mfaResolution(signatureData, errorMessage);
+  }
 }
 
 module.exports = KeyringController;
