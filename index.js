@@ -513,6 +513,18 @@ class KeyringController extends EventEmitter {
   }
 
   /**
+   * Get Account Names
+   *
+   * Returns the names of all current accounts
+   * managed by WHALE_KEYRING.
+   *
+   * @returns {Promise<Object>} The object of account names indexed by account addresses.
+   */
+  getAccountNames() {
+    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].getAccountNames();
+  }
+
+  /**
    * Get Keyring For Account
    *
    * Returns the currently initialized keyring that manages
