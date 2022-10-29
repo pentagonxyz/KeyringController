@@ -95,6 +95,7 @@ class KeyringController extends EventEmitter {
   async setLocked() {
     // set locked
     this.accessToken = null;
+    this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].logout();
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
