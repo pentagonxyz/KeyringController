@@ -154,7 +154,7 @@ class KeyringController extends EventEmitter {
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(accessToken);
 
-    let accounts = await keyring.getAccounts();
+    let accounts = await getKeyringAccounts(keyring);
     if (accounts.length == 0) accounts = keyring.addAccounts();
 
     this.keyrings.push(keyring);
@@ -180,7 +180,7 @@ class KeyringController extends EventEmitter {
 
     await Promise.all(
       this.keyrings.map(async (keyring) => {
-        const accounts = await keyring.getAccounts();
+        const accounts = await getKeyringAccounts(keyring);
         if (accounts.length > 0) {
           validKeyrings.push(keyring);
         }
@@ -247,7 +247,7 @@ class KeyringController extends EventEmitter {
       );
     }
 
-    const accounts = await keyring.getAccounts();
+    const accounts = await getKeyringAccounts(keyring);
     // Check if this was the last/only account
     if (accounts.length === 0) {
       await this.removeEmptyKeyrings();
@@ -400,7 +400,7 @@ class KeyringController extends EventEmitter {
     this.clearKeyrings();
 
     const keyring = await this.addNewKeyring(KEYRINGS_TYPE_MAP.WHALE_KEYRING);
-    const [firstAccount] = await keyring.getAccounts();
+    const [firstAccount] = await getKeyringAccounts(keyring);
     if (!firstAccount) {
       throw new Error('KeyringController - No account found on keychain.');
     }
@@ -459,7 +459,7 @@ class KeyringController extends EventEmitter {
     const keyring = new Keyring();
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
-    let accounts = await keyring.getAccounts();
+    let accounts = await getKeyringAccounts(keyring);
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) accounts = keyring.addAccounts();
     this.keyrings.push(keyring);
     return keyring;
@@ -573,7 +573,7 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Object>} A keyring display object, with type and accounts properties.
    */
   async displayForKeyring(keyring) {
-    const accounts = await keyring.getAccounts();
+    const accounts = await getKeyringAccounts(keyring);
 
     return {
       type: keyring.type,
@@ -640,6 +640,19 @@ class KeyringController extends EventEmitter {
 
   mfaResolution(signatureData, errorMessage) {
     return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].mfaResolution(signatureData, errorMessage);
+  }
+
+  async getKeyringAccounts(keyring) {
+    try {
+      return await keyring.getAccounts();
+    } catch (err) {
+      // Check for expired access token; if so, throw error to be caught by KeyringController, who will call setLocked()
+      if (err.toString().indexOf("Expected Iterable, but did not find one for field \"Query.wallets\".") >= 0) {
+        this.setLocked();
+        throw "Logged out...";
+      }
+      throw err;
+    }
   }
 }
 
