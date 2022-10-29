@@ -92,10 +92,10 @@ class KeyringController extends EventEmitter {
    * @emits KeyringController#lock
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
-  async setLocked() {
+  async setLocked(isLoggedOutAlready) {
     // set locked
     this.accessToken = null;
-    this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].logout();
+    if (!isLoggedOutAlready) this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].logout();
     this.memStore.updateState({ isUnlocked: false });
     // remove keyrings
     this.keyrings = [];
@@ -648,7 +648,7 @@ class KeyringController extends EventEmitter {
     } catch (err) {
       // Check for expired access token; if so, throw error to be caught by KeyringController, who will call setLocked()
       if (err.toString().indexOf("Expected Iterable, but did not find one for field \"Query.wallets\".") >= 0) {
-        this.setLocked();
+        this.setLocked(true);
         throw "Logged out...";
       }
       throw err;
