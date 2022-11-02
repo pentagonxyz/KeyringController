@@ -208,6 +208,10 @@ class KeyringController extends EventEmitter {
     this.fullUpdate();
   }
 
+  renameAccount(address, name) {
+    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].renameAccount(address, name);
+  }
+
   /**
    * Export Account
    *
