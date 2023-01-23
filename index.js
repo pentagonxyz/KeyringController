@@ -8,7 +8,7 @@ const WhaleKeyring = require('pentagonxyz/whale-keyring');
 const keyringTypes = [WhaleKeyring];
 
 const KEYRINGS_TYPE_MAP = {
-  WHALE_KEYRING: 'Kevlar Co. MPC',
+  WHALE_KEYRING: 'Waymont Co. Smart Contract Wallets',
 };
 
 class KeyringController extends EventEmitter {
@@ -60,7 +60,7 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
   async createNewVaultAndKeychain(accessToken) {
-    this.store.updateState({ vault: "KEVLAR_CO_MPC" });
+    this.store.updateState({ vault: "WAYMONT_CO_SCW" });
     if (accessToken !== undefined && typeof accessToken === 'string' && accessToken.length > 0) {
       await this.createFirstKeyTree(accessToken);
       this.setUnlocked.bind();
@@ -82,7 +82,7 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Object>} A Promise that resolves to the state.
    */
   async createNewVaultAndRestore(password, seedPhrase) {
-    throw new Error("createNewVaultAndRestore is not implemented in Kevlar Co.'s KeyringController.");
+    throw new Error("createNewVaultAndRestore is not implemented in Waymont Co.'s KeyringController.");
   }
 
   /**
@@ -132,7 +132,7 @@ class KeyringController extends EventEmitter {
    * @param {string} accessToken
    */
   async verifyPassword(accessToken) {
-    throw new Error("verifyPassword is not implemented in Kevlar Co.'s KeyringController.");
+    throw new Error("verifyPassword is not implemented in Waymont Co.'s KeyringController.");
   }
 
   /**
@@ -149,7 +149,7 @@ class KeyringController extends EventEmitter {
    * @returns {Promise<Keyring>} The new keyring.
    */
   async addNewKeyring(type, accessToken) {
-    if (type !== KEYRINGS_TYPE_MAP.WHALE_KEYRING) throw "Only KEYRINGS_TYPE_MAP.WHALE_KEYRING is supposed by Kevlar Co.'s KeyringController.";
+    if (type !== KEYRINGS_TYPE_MAP.WHALE_KEYRING) throw "Only KEYRINGS_TYPE_MAP.WHALE_KEYRING is supposed by Waymont Co.'s KeyringController.";
 
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(accessToken);
