@@ -273,12 +273,12 @@ class KeyringController extends EventEmitter {
    * @param {Object} ethTx - The transaction to sign.
    * @param {string} _fromAddress - The transaction 'from' address.
    * @param {Object} opts - Signing options.
-   * @returns {Promise<Object>} The signed transaction object.
+   * @returns {Promise<string>} The submitted transaction hash.
    */
-  async signTransaction(ethTx, _fromAddress, opts = {}) {
+  async sendTransaction(ethTx, _fromAddress, opts = {}) {
     const fromAddress = normalizeAddress(_fromAddress);
     const keyring = await this.getKeyringForAccount(fromAddress);
-    return await keyring.signTransaction(fromAddress, ethTx, opts);
+    return await keyring.sendTransaction(fromAddress, ethTx, opts);
   }
 
   /**
