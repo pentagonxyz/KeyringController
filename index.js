@@ -8,7 +8,7 @@ const WhaleKeyring = require('pentagonxyz/whale-keyring');
 const keyringTypes = [WhaleKeyring];
 
 const KEYRINGS_TYPE_MAP = {
-  WHALE_KEYRING: 'Waymont Co. Smart Contract Wallets',
+  WHALE_KEYRING: 'Waymont Co. SCW',
 };
 
 class KeyringController extends EventEmitter {
