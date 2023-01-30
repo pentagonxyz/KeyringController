@@ -155,7 +155,10 @@ class KeyringController extends EventEmitter {
     const keyring = new Keyring(accessToken);
 
     let accounts = await this.getKeyringAccounts(keyring);
-    if (accounts.length == 0) accounts = keyring.addAccounts();
+    if (accounts.length == 0) {
+      if (await keyring.checkMfaStatus()) await waitForMfaSetup();
+      accounts = keyring.addAccounts();
+    }
 
     this.keyrings.push(keyring);
 
@@ -163,6 +166,24 @@ class KeyringController extends EventEmitter {
     this.fullUpdate();
 
     return keyring;
+  }
+
+  async waitForMfaSetup() {
+    await new Promise((resolve, reject) => {
+      chrome.windows.create({
+        url: baseAppUrl + '/mfa/setup/',
+        focused: true,
+        type: 'popup',
+        width: 600,
+        height: 700,
+      }, function (mfaSetupWindow) {
+        chrome.windows.onRemoved.addListener(function (removedWindowIndex) {
+          if (removedWindowIndex === mfaSetupWindow.id) {
+            resolve();
+          }
+        });
+      });
+    });
   }
 
   /**
@@ -464,7 +485,10 @@ class KeyringController extends EventEmitter {
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
     let accounts = await this.getKeyringAccounts(keyring);
-    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) accounts = keyring.addAccounts();
+    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) {
+      if (await keyring.checkMfaStatus()) await waitForMfaSetup();
+      accounts = keyring.addAccounts();
+    }
     this.keyrings.push(keyring);
     return keyring;
   }
