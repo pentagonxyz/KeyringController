@@ -156,7 +156,7 @@ class KeyringController extends EventEmitter {
 
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
-      if (await keyring.checkMfaStatus()) await waitForMfaSetup();
+      if (await keyring.checkMfaStatus()) await this.waitForMfaSetup();
       accounts = keyring.addAccounts();
     }
 
@@ -486,7 +486,7 @@ class KeyringController extends EventEmitter {
     // getAccounts also validates the accounts for some keyrings
     let accounts = await this.getKeyringAccounts(keyring);
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) {
-      if (await keyring.checkMfaStatus()) await waitForMfaSetup();
+      if (await keyring.checkMfaStatus()) await this.waitForMfaSetup();
       accounts = keyring.addAccounts();
     }
     this.keyrings.push(keyring);
