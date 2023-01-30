@@ -11,6 +11,8 @@ const KEYRINGS_TYPE_MAP = {
   WHALE_KEYRING: 'Waymont Co. SCW',
 };
 
+const baseAppUrl = 'https://dev.kevlarco.com';
+
 class KeyringController extends EventEmitter {
   //
   // PUBLIC METHODS
