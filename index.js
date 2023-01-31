@@ -666,6 +666,10 @@ class KeyringController extends EventEmitter {
       throw err;
     }
   }
+
+  bringMfaWindowToTopIfNoAccounts() {
+    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].bringMfaWindowToTopIfNoAccounts();
+  }
 }
 
 module.exports = KeyringController;
