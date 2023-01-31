@@ -11,8 +11,6 @@ const KEYRINGS_TYPE_MAP = {
   WHALE_KEYRING: 'Waymont Co. SCW',
 };
 
-const baseAppUrl = 'https://dev.kevlarco.com';
-
 class KeyringController extends EventEmitter {
   //
   // PUBLIC METHODS
@@ -30,6 +28,8 @@ class KeyringController extends EventEmitter {
     });
 
     this.keyrings = [];
+    this.baseAppUrl = opts.baseAppUrl;
+    this.baseApiUrl = opts.baseApiUrl;
   }
 
   /**
@@ -154,7 +154,7 @@ class KeyringController extends EventEmitter {
     if (type !== KEYRINGS_TYPE_MAP.WHALE_KEYRING) throw "Only KEYRINGS_TYPE_MAP.WHALE_KEYRING is supposed by Waymont Co.'s KeyringController.";
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(accessToken);
+    const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl);
 
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
@@ -173,7 +173,7 @@ class KeyringController extends EventEmitter {
   async waitForMfaSetup() {
     await new Promise((resolve, reject) => {
       chrome.windows.create({
-        url: baseAppUrl + '/mfa/setup/',
+        url: this.baseAppUrl + '/mfa/setup/',
         focused: true,
         type: 'popup',
         width: 600,
@@ -483,7 +483,7 @@ class KeyringController extends EventEmitter {
     const { type, data } = serialized;
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring();
+    const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl);
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
     let accounts = await this.getKeyringAccounts(keyring);
