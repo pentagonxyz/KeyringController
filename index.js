@@ -666,10 +666,6 @@ class KeyringController extends EventEmitter {
       throw err;
     }
   }
-
-  forceNextMfaSetup() {
-    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].forceNextMfaSetup = true;
-  }
 }
 
 module.exports = KeyringController;
