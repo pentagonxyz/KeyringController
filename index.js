@@ -170,7 +170,12 @@ class KeyringController extends EventEmitter {
     return keyring;
   }
 
-  async waitForMfaSetup() {
+  async waitForMfaSetup(force) {
+    if (this.mfaSetupWindowId === undefined && !force) return;
+    if (force) {
+      chrome.windows.update(this.mfaSetupWindowId, { focused: true });
+      return;
+    }
     await new Promise((resolve, reject) => {
       chrome.windows.create({
         url: this.baseAppUrl + '/mfa/setup/',
@@ -179,8 +184,10 @@ class KeyringController extends EventEmitter {
         width: 600,
         height: 700,
       }, function (mfaSetupWindow) {
+        this.mfaSetupWindowId = mfaSetupWindow.id;
         chrome.windows.onRemoved.addListener(function (removedWindowIndex) {
           if (removedWindowIndex === mfaSetupWindow.id) {
+            this.mfaSetupWindowId = undefined;
             resolve();
           }
         });
