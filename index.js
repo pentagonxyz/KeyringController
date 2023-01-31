@@ -155,6 +155,8 @@ class KeyringController extends EventEmitter {
 
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl);
+    keyring.forceNextMfaSetup = this.forceNextMfaSetup;
+    this.forceNextMfaSetup = false;
 
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
@@ -466,6 +468,8 @@ class KeyringController extends EventEmitter {
 
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl);
+    keyring.forceNextMfaSetup = this.forceNextMfaSetup;
+    this.forceNextMfaSetup = false;
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
     let accounts = await this.getKeyringAccounts(keyring);
@@ -665,10 +669,6 @@ class KeyringController extends EventEmitter {
       }
       throw err;
     }
-  }
-
-  forceNextMfaSetup() {
-    return this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING)[0].forceNextMfaSetup = true;
   }
 }
 
