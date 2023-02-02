@@ -152,6 +152,7 @@ class KeyringController extends EventEmitter {
    */
   async addNewKeyring(type, accessToken) {
     if (type !== KEYRINGS_TYPE_MAP.WHALE_KEYRING) throw "Only KEYRINGS_TYPE_MAP.WHALE_KEYRING is supposed by Waymont Co.'s KeyringController.";
+    if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl);
@@ -161,9 +162,11 @@ class KeyringController extends EventEmitter {
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
       if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
-      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length == 0) accounts = keyring.addAccounts();
+      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
+      accounts = keyring.addAccounts();
     }
 
+    if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
     this.keyrings.push(keyring);
 
     await this._updateMemStoreKeyrings();
@@ -465,6 +468,7 @@ class KeyringController extends EventEmitter {
    */
   async _restoreKeyring(serialized) {
     const { type, data } = serialized;
+    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
     const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl);
@@ -475,8 +479,10 @@ class KeyringController extends EventEmitter {
     let accounts = await this.getKeyringAccounts(keyring);
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) {
       if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
+      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
       accounts = keyring.addAccounts();
     }
+    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
     this.keyrings.push(keyring);
     return keyring;
   }
