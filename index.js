@@ -161,7 +161,7 @@ class KeyringController extends EventEmitter {
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
       if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
-      accounts = keyring.addAccounts();
+      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length == 0) accounts = keyring.addAccounts();
     }
 
     this.keyrings.push(keyring);
