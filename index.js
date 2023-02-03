@@ -163,7 +163,7 @@ class KeyringController extends EventEmitter {
     if (accounts.length == 0) {
       if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
       if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
-      accounts = keyring.addAccounts();
+      accounts = await keyring.addAccounts();
     }
 
     if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
@@ -480,7 +480,7 @@ class KeyringController extends EventEmitter {
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) {
       if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
       if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
-      accounts = keyring.addAccounts();
+      accounts = await keyring.addAccounts();
     }
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
     this.keyrings.push(keyring);
