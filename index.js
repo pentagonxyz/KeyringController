@@ -159,9 +159,14 @@ class KeyringController extends EventEmitter {
     keyring.forceNextMfaSetup = this.forceNextMfaSetup;
     this.forceNextMfaSetup = false;
 
+    if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
     let accounts = await this.getKeyringAccounts(keyring);
     if (accounts.length == 0) {
-      if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
+      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
+      if (!(await keyring.checkMfaStatus())) {
+        if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
+        await keyring.waitForMfaSetup();
+      }
       if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
       accounts = await keyring.addAccounts();
     }
@@ -476,9 +481,14 @@ class KeyringController extends EventEmitter {
     this.forceNextMfaSetup = false;
     await keyring.deserialize(data);
     // getAccounts also validates the accounts for some keyrings
+    if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
     let accounts = await this.getKeyringAccounts(keyring);
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && accounts.length == 0) {
-      if (!(await keyring.checkMfaStatus())) await keyring.waitForMfaSetup();
+      if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
+      if (!(await keyring.checkMfaStatus())) {
+        if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
+        await keyring.waitForMfaSetup();
+      }
       if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
       accounts = await keyring.addAccounts();
     }
