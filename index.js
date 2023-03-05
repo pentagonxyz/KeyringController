@@ -30,6 +30,7 @@ class KeyringController extends EventEmitter {
     this.keyrings = [];
     this.baseAppUrl = opts.baseAppUrl;
     this.baseApiUrl = opts.baseApiUrl;
+    this.processTransaction = opts.processTransaction;
   }
 
   /**
@@ -319,10 +320,10 @@ class KeyringController extends EventEmitter {
    * @param {Object} msgParams - The message parameters to sign.
    * @returns {Promise<Buffer>} The raw signature.
    */
-  async signPersonalMessage(msgParams, opts = {}) {
+  async signPersonalMessage(msgParams, opts = {}, origin) {
     const address = normalizeAddress(msgParams.from);
     const keyring = await this.getKeyringForAccount(address);
-    return await keyring.signPersonalMessage(address, msgParams.data, opts);
+    return await keyring.signPersonalMessage(address, msgParams.data, opts, this.processTransaction, origin);
   }
 
   /**
