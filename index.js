@@ -156,7 +156,7 @@ class KeyringController extends EventEmitter {
     if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl, this.setLocked);
+    const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl, this.setLocked, this.processTransaction);
     keyring.forceNextMfaSetup = this.forceNextMfaSetup;
     this.forceNextMfaSetup = false;
 
@@ -323,7 +323,7 @@ class KeyringController extends EventEmitter {
   async signPersonalMessage(msgParams, opts = {}, origin) {
     const address = normalizeAddress(msgParams.from);
     const keyring = await this.getKeyringForAccount(address);
-    return await keyring.signPersonalMessage(address, msgParams.data, opts, this.processTransaction, origin);
+    return await keyring.signPersonalMessage(address, msgParams.data, opts, origin);
   }
 
   /**
@@ -364,7 +364,7 @@ class KeyringController extends EventEmitter {
   async signTypedMessage(msgParams, opts = { version: 'V1' }) {
     const address = normalizeAddress(msgParams.from);
     const keyring = await this.getKeyringForAccount(address);
-    return keyring.signTypedData(address, msgParams.data, opts);
+    return keyring.signTypedData(address, msgParams.data, opts, msgParams.origin);
   }
 
   /**
@@ -477,7 +477,7 @@ class KeyringController extends EventEmitter {
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl, this.setLocked);
+    const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl, this.setLocked, this.processTransaction);
     keyring.forceNextMfaSetup = this.forceNextMfaSetup;
     this.forceNextMfaSetup = false;
     await keyring.deserialize(data);
