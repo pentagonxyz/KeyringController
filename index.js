@@ -156,7 +156,7 @@ class KeyringController extends EventEmitter {
     if (this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl, this.setLocked, this.processTransaction);
+    const keyring = new Keyring(accessToken, this.baseAppUrl, this.baseApiUrl, this.setLocked.bind(this), this.processTransaction);
     keyring.forceNextMfaSetup = this.forceNextMfaSetup;
     this.forceNextMfaSetup = false;
 
@@ -477,7 +477,7 @@ class KeyringController extends EventEmitter {
     if (type === KEYRINGS_TYPE_MAP.WHALE_KEYRING && this.getKeyringsByType(KEYRINGS_TYPE_MAP.WHALE_KEYRING).length > 0) throw "Keyring already added.";
 
     const Keyring = this.getKeyringClassForType(type);
-    const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl, this.setLocked, this.processTransaction);
+    const keyring = new Keyring(undefined, this.baseAppUrl, this.baseApiUrl, this.setLocked.bind(this), this.processTransaction);
     keyring.forceNextMfaSetup = this.forceNextMfaSetup;
     this.forceNextMfaSetup = false;
     await keyring.deserialize(data);
